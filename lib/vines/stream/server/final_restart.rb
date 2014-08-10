@@ -9,7 +9,10 @@ module Vines
         end
 
         def node(node)
-          raise StreamErrors::NotAuthorized unless stream?(node)
+          unless stream?(node)
+            puts "FinalRestart"
+            raise StreamErrors::NotAuthorized
+          end
           stream.start(node)
           stream.write('<stream:features/>')
           stream.router << stream

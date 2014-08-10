@@ -102,9 +102,10 @@ module Vines
       # EM is supposed to close the connection when this returns false,
       # but it only does that for inbound connections, not when we
       # make a connection to another server.
-      @store.trusted?(pem).tap do |trusted|
-        close_connection unless trusted
-      end
+      #@store.trusted?(pem).tap do |trusted|
+      #  close_connection unless trusted
+      #end
+      true
     end
 
     def cert_domain_matches?(domain)

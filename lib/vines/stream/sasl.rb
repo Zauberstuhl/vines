@@ -28,9 +28,11 @@ module Vines
         unless encoded == EMPTY
           authzid = decode64(encoded)
           matches_from = (authzid == @stream.remote_domain)
+          puts "external_auth: matches_from => #{matches_from}"
           raise SaslErrors::InvalidAuthzid unless matches_from
         end
         matches_from = @stream.cert_domain_matches?(@stream.remote_domain)
+        puts "external_auth: matches_from => #{matches_from}"
         matches_from or raise SaslErrors::NotAuthorized
       end
 

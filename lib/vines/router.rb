@@ -108,6 +108,7 @@ module Vines
     # s2s stream has successfully connected and we need to dequeue all stanzas
     # we received while waiting for the connection to finish.
     def send_pending(key, stream)
+      puts "... success?!"
       @pending[key].each do |stanza|
         stream.write(stanza)
       end
@@ -116,6 +117,7 @@ module Vines
     # Return all pending stanzas to their senders as remote-server-not-found
     # errors. Called after a s2s stream has failed to connect.
     def return_pending(key)
+      puts "... failed?!"
       @pending[key].each do |stanza|
         to, from = JID.new(stanza['to']), JID.new(stanza['from'])
         xml = StanzaErrors::RemoteServerNotFound.new(stanza, 'cancel').to_xml

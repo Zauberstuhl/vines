@@ -12,7 +12,10 @@ module Vines
           end
 
           def node(node)
-            raise StreamErrors::NotAuthorized unless external?(node)
+            unless external?(node)
+              puts "Auth:#{node.to_yaml}"
+              raise StreamErrors::NotAuthorized
+            end
             authzid = Base64.strict_encode64(stream.domain)
             stream.write(%Q{<auth xmlns="#{NS}" mechanism="EXTERNAL">#{authzid}</auth>})
             advance
@@ -22,6 +25,7 @@ module Vines
 
           def external?(node)
             external = node.xpath("ns:mechanisms/ns:mechanism[text()='EXTERNAL']", 'ns' => NS).any?
+            puts "Auth: external => #{external}"
             node.name == 'features' && namespace(node) == NAMESPACES[:stream] && external
           end
         end

@@ -14,7 +14,10 @@ module Vines
           end
 
           def node(node)
-            raise StreamErrors::NotAuthorized unless namespace(node) == NS
+            unless namespace(node) == NS
+              puts "TLSResult"
+              raise StreamErrors::NotAuthorized
+            end
             case node.name
             when PROCEED
               stream.encrypt
@@ -24,6 +27,7 @@ module Vines
             when FAILURE
               stream.close_connection
             else
+              puts "TLSResult: else"
               raise StreamErrors::NotAuthorized
             end
           end

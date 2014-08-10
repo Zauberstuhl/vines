@@ -16,6 +16,7 @@ module Vines
       # use a background thread to avoid blocking the server on DNS SRV
       # lookups.
       def self.start(config, to, from, &callback)
+        puts "#{from} -> #{to}"
         op = proc do
           Resolv::DNS.open do |dns|
             dns.getresources("_xmpp-server._tcp.#{to}", Resolv::DNS::Resource::IN::SRV)
@@ -73,7 +74,8 @@ module Vines
       end
 
       def ssl_handshake_completed
-        close_connection unless cert_domain_matches?(@remote_domain)
+        #close_connection unless cert_domain_matches?(@remote_domain)
+        $server_handshake_completed = true
       end
 
       # Return an array of allowed authentication mechanisms advertised as

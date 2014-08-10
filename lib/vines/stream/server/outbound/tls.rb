@@ -12,7 +12,10 @@ module Vines
           end
 
           def node(node)
-            raise StreamErrors::NotAuthorized unless tls?(node)
+            unless tls?(node)
+              puts "TLS"
+              raise StreamErrors::NotAuthorized
+            end
             stream.write("<starttls xmlns='#{NS}'/>")
             advance
           end

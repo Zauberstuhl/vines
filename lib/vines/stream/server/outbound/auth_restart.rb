@@ -10,7 +10,10 @@ module Vines
           end
 
           def node(node)
-            raise StreamErrors::NotAuthorized unless stream?(node)
+            unless stream?(node)
+              puts "AuthRestart"
+              raise StreamErrors::NotAuthorized
+            end
             advance
           end
         end

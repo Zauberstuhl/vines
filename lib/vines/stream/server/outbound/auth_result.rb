@@ -13,7 +13,10 @@ module Vines
           end
 
           def node(node)
-            raise StreamErrors::NotAuthorized unless namespace(node) == NAMESPACES[:sasl]
+            unless namespace(node) == NAMESPACES[:sasl]
+              puts "Outbound AuthResult"
+              raise StreamErrors::NotAuthorized
+            end
             case node.name
             when SUCCESS
               stream.start(node)
@@ -22,6 +25,7 @@ module Vines
             when FAILURE
               stream.close_connection
             else
+              puts "Outbound AuthResult: else"
               raise StreamErrors::NotAuthorized
             end
           end
