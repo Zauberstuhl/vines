@@ -123,13 +123,17 @@ module Vines
 
     def ssl_verify_peer(pem)
       # Skip verifying if user accept self-signed certificates
-      return if self.vhost.accept_self_signed?
+      return true if self.vhost.accept_self_signed?
       # EM is supposed to close the connection when this returns false,
       # but it only does that for inbound connections, not when we
       # make a connection to another server.
       @store.trusted?(pem).tap do |trusted|
         close_connection unless trusted
       end
+    end
+
+    def ssl_handshake_completed
+      $server_handshake_completed = true
     end
 
     def cert_domain_matches?(domain)
@@ -292,14 +296,6 @@ module Vines
       label = (direction == :out) ? 'Sent' : 'Received'
       log.debug("%s %21s -> %s\n%s\n" %
         ["#{label} stanza:".ljust(PAD), from, to, node])
-    end
-
-    # Inspects the current state of the stream's state machine. Provided as a
-    # method so subclasses can override the behavior.
-    #
-    # Returns the current Stream::State.
-    def state
-      @state
     end
 
     # Determine if this is a valid domain-only JID that can be used in
