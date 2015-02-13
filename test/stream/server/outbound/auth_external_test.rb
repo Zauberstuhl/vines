@@ -2,10 +2,10 @@
 
 require 'test_helper'
 
-describe Vines::Stream::Server::Outbound::Auth do
+describe Vines::Stream::Server::Outbound::AuthExternal do
   before do
     @stream = MiniTest::Mock.new
-    @state = Vines::Stream::Server::Outbound::Auth.new(@stream)
+    @state = Vines::Stream::Server::Outbound::AuthExternal.new(@stream)
   end
 
   def test_invalid_element
