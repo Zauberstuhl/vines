@@ -5,6 +5,7 @@ module Vines
     class Server
       class Outbound
         class Auth < State
+          FEATURES = 'stream:features'.freeze
           REQUIRED = 'required'.freeze
 
           def initialize(stream, success=AuthDialbackResult)
@@ -41,16 +42,12 @@ module Vines
 
           def dialback?(node)
             dialback = node.xpath('ns:dialback', 'ns' => NAMESPACES[:dialback]).any?
-            features?(node) && dialback
+            node.name == FEATURES && dialback
           end
 
           def tls?(node)
             tls = node.xpath('ns:starttls', 'ns' => NAMESPACES[:tls]).any?
-            features?(node) && tls
-          end
-
-          def features?(node)
-            node.name == 'features' && namespace(node) == NAMESPACES[:stream]
+            node.name == FEATURES && tls
           end
         end
       end
