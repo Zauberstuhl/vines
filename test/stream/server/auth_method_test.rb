@@ -2,6 +2,12 @@
 
 require 'test_helper'
 
+class OperatorWrapper
+  def <<(stream)
+    [stream]
+  end
+end
+
 describe Vines::Stream::Server::AuthMethod do
   before do
     @result = {
@@ -67,9 +73,8 @@ describe Vines::Stream::Server::AuthMethod do
   end
 
   def test_valid_dialback
-    skip("Was not able to mock custom << operator")
     @stream.expect(:config, Vines::Config)
-    @stream.expect(:router, nil)
+    @stream.expect(:router, OperatorWrapper.new)
     @stream.expect(:close_connection_after_writing, nil)
     node = node(%Q{
       <db:result from="#{@result[:from]}" to="#{@result[:to]}">
