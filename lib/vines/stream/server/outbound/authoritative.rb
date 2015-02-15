@@ -6,7 +6,7 @@ module Vines
       class Outbound
         class Authoritative < State
           VALID, INVALID, ERROR, TYPE = %w[valid invalid error type]
-          VERIFY, ID, FROM, TO = %w[db:verify id from to].map {|s| s.freeze }
+          VERIFY, ID, FROM, TO = %w[verify id from to].map {|s| s.freeze }
 
           def initialize(stream, success=nil)
             super

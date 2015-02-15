@@ -160,7 +160,12 @@ module Vines
       !@store.files_for_domain(domain).nil?
     end
 
+    def unbind?
+      !@unbind.nil? && @unbind
+    end
+
     def unbind
+      @unbind = true
       router.delete(self)
       log.info { "%s %21s -> %s" %
         ['Stream disconnected:'.ljust(PAD), @remote_addr, @local_addr] }

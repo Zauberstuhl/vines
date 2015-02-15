@@ -4,7 +4,7 @@ module Vines
   class Stream
     class Server
       class AuthMethod < State
-        STARTTLS, RESULT, FROM, TO = %w[starttls db:result from to].map {|s| s.freeze }
+        STARTTLS, RESULT, FROM, TO = %w[starttls result from to].map {|s| s.freeze }
         PROCEED  = %Q{<proceed xmlns="#{NAMESPACES[:tls]}"/>}.freeze
         FAILURE  = %Q{<failure xmlns="#{NAMESPACES[:tls]}"/>}.freeze
 
@@ -25,21 +25,19 @@ module Vines
               stream.close_connection_after_writing
             end
           elsif dialback?(node)
-            begin
-              Vines::Stream::Server.start(stream.config, node[FROM], node[TO], dbv = true) do |authoritative|
-                if authoritative
-                  authoritative.write("<db:verify from='#{node[TO]}' id='#{stream.id}' to='#{node[FROM]}'>#{node.text}</db:verify>")
+            Vines::Stream::Server.start(stream.config, node[FROM], node[TO], dbv = true) do |authoritative|
+              if authoritative
+                if authoritative.unbind?
+                  stream.write("<db:result from='#{node[TO]}' to='#{node[FROM]}'" +
+                    " type='error'><error type='cancel'><item-not-found " +
+                    "xmlns='#{NAMESPACES[:stanzas]}'/></error></db:result>")
+                  stream.close_connection_after_writing
                 else
-                  raise StreamErrors::RemoteConnectionFailed
+                  # We need to be discoverable for the dialback connection
+                  stream.router << stream
+                  authoritative.write("<db:verify from='#{node[TO]}' id='#{stream.id}' to='#{node[FROM]}'>#{node.text}</db:verify>")
                 end
               end
-              # We need to be discoverable for the dialback connection
-              stream.router << stream
-            rescue StreamErrors::RemoteConnectionFailed => e
-              stream.write("<db:result from='#{node[TO]}' to='#{node[FROM]}'" +
-                           " type='error'><error type='cancel'><item-not-found " +
-                           "xmlns='#{NAMESPACES[:stanzas]}'/></error></db:result>")
-              stream.close_connection_after_writing
             end
           else
             raise StreamErrors::NotAuthorized

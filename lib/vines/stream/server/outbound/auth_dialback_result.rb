@@ -5,7 +5,7 @@ module Vines
     class Server
       class Outbound
         class AuthDialbackResult < State
-          RESULT, VALID, INVALID, TYPE = %w[db:result valid invalid type].map {|s| s.freeze }
+          RESULT, VALID, INVALID, TYPE = %w[result valid invalid type].map {|s| s.freeze }
 
           attr_accessor :dialback_secret
 

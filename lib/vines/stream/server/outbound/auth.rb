@@ -5,7 +5,7 @@ module Vines
     class Server
       class Outbound
         class Auth < State
-          FEATURES = 'stream:features'.freeze
+          FEATURES = 'features'.freeze
           REQUIRED = 'required'.freeze
 
           def initialize(stream, success=AuthDialbackResult)
