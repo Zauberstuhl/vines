@@ -5,7 +5,7 @@ module Vines
     class Server
       class Outbound
         class AuthDialbackResult < State
-          RESULT, VALID, INVALID, TYPE = %w[result valid invalid type].map {|s| s.freeze }
+          RESULT, VALID, INVALID, TYPE = %w[db:result valid invalid type].map {|s| s.freeze }
 
           attr_accessor :dialback_secret
 
@@ -14,7 +14,7 @@ module Vines
           end
 
           def node(node)
-            raise StreamErrors::NotAuthorized unless result?(node)
+            raise StreamErrors::NotAuthorized if node.name != RESULT
 
             case node[TYPE]
             when VALID
@@ -25,13 +25,6 @@ module Vines
             else
               raise StreamErrors::NotAuthorized
             end
-          end
-
-          private
-
-          def result?(node)
-            result = node.name == RESULT && namespace(node) == NAMESPACES[:legacy_dialback]
-            result && node[TYPE] == VALID
           end
         end
       end

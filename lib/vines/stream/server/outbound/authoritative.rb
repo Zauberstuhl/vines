@@ -6,7 +6,7 @@ module Vines
       class Outbound
         class Authoritative < State
           VALID, INVALID, ERROR, TYPE = %w[valid invalid error type]
-          VERIFY, ID, FROM, TO = %w[verify id from to].map {|s| s.freeze }
+          VERIFY, ID, FROM, TO = %w[db:verify id from to].map {|s| s.freeze }
 
           def initialize(stream, success=nil)
             super
@@ -14,11 +14,7 @@ module Vines
 
           def node(node)
             raise StreamErrors::NotAuthorized unless authoritative?(node)
-            case node[TYPE]
-            when INVALID
-              @inbound.write(StanzaErrors::Forbidden.new(self, 'auth').to_xml)
-              @inbound.close_connection_after_writing
-            when VALID
+            if node[TYPE] == VALID
               @inbound.write("<db:result from='#{node[TO]}' to='#{node[FROM]}' type='#{node[TYPE]}'/>")
               @inbound.advance(Server::Ready.new(@inbound))
               @inbound.notify_connected
