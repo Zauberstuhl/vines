@@ -12,10 +12,14 @@ Vines::Config.configure do
   # `vines init`.
   certs 'conf/certs'
 
-  # Setup a pepper to generate the encrypted password.
-  pepper "065eb8798b181ff0ea2c5c16aee0ff8b70e04e2ee6bd6e08b49da46924223e39127d5335e466207d42bf2a045c12be5f90e92012a4f05f7fc6d9f3c875f4c95b"
+  # Set the maximum of offline messages stored per user.
+  # If it exceeds, old messages will be deleted.
+  max_offline_msgs 150
 
   host 'diaspora' do
+    cross_domain_messages true
+    accept_self_signed false
+    force_s2s_encryption false
     storage 'sql'
   end
 
@@ -30,14 +34,14 @@ Vines::Config.configure do
   # much larger than the setting for client-to-server.
   server '0.0.0.0', 5269 do
     max_stanza_size 131072
-    hosts []
+    blacklist []
   end
 
   # Configure the built-in HTTP server that serves static files and responds to
   # XEP-0124 BOSH requests. This allows HTTP clients to connect to
   # the XMPP server.
   http '0.0.0.0', 5280 do
-    bind '/xmpp'
+    bind '/http-bind'
     max_stanza_size 65536
     max_resources_per_account 5
     root 'public'

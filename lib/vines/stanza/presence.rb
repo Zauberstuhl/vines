@@ -18,8 +18,34 @@ module Vines
         unless self['type'].nil?
           raise StanzaErrors::BadRequest.new(self, 'modify')
         end
+        if Config.instance.max_offline_msgs > 0 && !validate_to
+          check_offline_messages(stream.last_broadcast_presence)
+        end
         dir = outbound? ? 'outbound' : 'inbound'
         method("#{dir}_broadcast_presence").call
+      end
+
+      def check_offline_messages(presence)
+        priority = presence.xpath("//priority").text.to_i rescue nil
+        if priority != nil && priority >= 0
+          jid = stream.user.jid.to_s
+          storage.find_messages(jid).each do |id, m|
+            stamp = Time.parse(m[:created_at].to_s)
+            doc = Nokogiri::XML::Builder.new
+            doc.message(:type => "chat", :from => m[:from], :to => m[:to]) do |msg|
+              msg.send(:"body", m[:message])
+              msg.send(:"delay", "Offline Storage",
+                       :xmlns => NAMESPACES[:delay],
+                       :from => m[:from],
+                       :stamp => stamp.iso8601)
+            end
+            xml = doc.to_xml :save_with => Nokogiri::XML::Node::SaveOptions::NO_DECLARATION
+            stream.write(xml)
+            # after delivering it we should
+            # delete the message from database
+            storage.destroy_message(id)
+          end
+        end
       end
 
       def outbound?
@@ -42,6 +68,12 @@ module Vines
         else
           stream.user.subscribed_from?(to) ? stream.available_resources(to) : []
         end
+
+        # NOTE overriding vCard information is not concurring
+        # with XEP-153 due the fact that the user can only update
+        # his vCard via the Diaspora environment we should act
+        # the same way for the avatar update
+        override_vcard_update
 
         broadcast(recipients)
         broadcast(stream.available_resources(stream.user.jid))
@@ -135,6 +167,15 @@ module Vines
         stream.user.jid.bare.tap do |bare|
           self['from'] = bare.to_s
         end
+      end
+
+      def override_vcard_update
+        image_path = storage.find_avatar_by_jid(@node['from'])
+        return if image_path.nil?
+        photo_tag = "<photo><EXTVAL>#{image_path}</EXTVAL></photo>"
+        node = @node.xpath("//xmlns:x", 'xmlns' => NAMESPACES[:vcard_update]).first
+        node.remove unless node.blank?
+        @node << "<x xmlns=\"#{NAMESPACES[:vcard_update]}\">#{photo_tag}</x>"
       end
     end
   end

@@ -21,7 +21,7 @@ module Vines
     end
 
     def initialize(&block)
-      @pepper = "" # no pepper set
+      @max_offline_msgs = 150
       @certs = File.expand_path('conf/certs')
       @vhosts, @ports, @cluster = {}, {}, nil
       @null = Storage::Null.new
@@ -34,24 +34,20 @@ module Vines
       dir ? @certs = File.expand_path(dir) : @certs
     end
 
+    def max_offline_msgs(count=nil)
+      count ? @max_offline_msgs = count : @max_offline_msgs
+    end
+
     def host(*names, &block)
       names = names.flatten.map {|name| name.downcase }
       dupes = names.uniq.size != names.size || (@vhosts.keys & names).any?
       raise "one host definition per domain allowed" if dupes
       names.each do |name|
-        if name.eql? "diaspora"
-          @vhosts[domain_name] = Host.new(self, domain_name, &block)
-        else
-          @vhosts[name] = Host.new(self, name, &block)
-        end
+        @vhosts[name] = Host.new(self, name, &block)
       end
     end
 
-    def pepper(pepper=nil)
-      pepper ? @pepper = pepper : @pepper
-    end
-
-    def domain_name
+    def diaspora_domain
       AppConfig.environment.url
         .gsub(/^http(s){0,1}:\/\/|\/$/, '')
         .to_s rescue "localhost"
@@ -78,7 +74,7 @@ module Vines
         unless File.exists?(file)
           File.new(file, 'w') rescue raise "log directory doesn't exists"
         end
-        
+
         if File.exists?(file)
           Vines::Log.set_log_file(file)
         end
@@ -158,7 +154,10 @@ module Vines
     # Returns true if server-to-server connections are allowed with the
     # given domain.
     def s2s?(domain)
-      @ports[:server] && @ports[:server].hosts.include?(domain.to_s)
+      # Disabled whitelisting to allow anonymous hosts,
+      # otherwise everyone has to add manually all hosts.
+      # Using blacklist in case we have to block a malicious host.
+      @ports[:server] && !@ports[:server].blacklist.include?(domain.to_s)
     end
 
     # Return true if the server is a member of a cluster, serving the same

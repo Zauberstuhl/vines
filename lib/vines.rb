@@ -14,7 +14,9 @@ module Vines
     :tls              => 'urn:ietf:params:xml:ns:xmpp-tls'.freeze,
     :bind             => 'urn:ietf:params:xml:ns:xmpp-bind'.freeze,
     :session          => 'urn:ietf:params:xml:ns:xmpp-session'.freeze,
+    :stanzas          => 'urn:ietf:params:xml:ns:xmpp-stanzas'.freeze,
     :ping             => 'urn:xmpp:ping'.freeze,
+    :delay            => 'urn:xmpp:delay'.freeze,
     :pubsub           => 'http://jabber.org/protocol/pubsub'.freeze,
     :pubsub_event     => 'http://jabber.org/protocol/pubsub#event'.freeze,
     :pubsub_create    => 'http://jabber.org/protocol/pubsub#create-nodes'.freeze,
@@ -26,10 +28,14 @@ module Vines
     :disco_items      => 'http://jabber.org/protocol/disco#items'.freeze,
     :disco_info       => 'http://jabber.org/protocol/disco#info'.freeze,
     :http_bind        => 'http://jabber.org/protocol/httpbind'.freeze,
+    :offline          => 'msgoffline'.freeze,
     :bosh             => 'urn:xmpp:xbosh'.freeze,
     :vcard            => 'vcard-temp'.freeze,
+    :vcard_update     => 'vcard-temp:x:update'.freeze,
     :si               => 'http://jabber.org/protocol/si'.freeze,
-    :byte_streams     => 'http://jabber.org/protocol/bytestreams'.freeze
+    :byte_streams     => 'http://jabber.org/protocol/bytestreams'.freeze,
+    :dialback         => 'urn:xmpp:features:dialback'.freeze,
+    :legacy_dialback  => 'jabber:server:dialback'.freeze
   }.freeze
 
   module Log
@@ -54,13 +60,6 @@ module Vines
   end
 end
 
-begin
-  # try to initialize diaspora AppConfig
-  require "#{Dir.pwd}/config/load_config.rb"
-rescue LoadError
-  puts "Cannot find Diaspora environment! Fallback to vines configuration."
-end
-
 %w[
   active_record
   base64
@@ -73,13 +72,14 @@ end
   http/parser
   json
   logger
-  net/ldap
   nokogiri
   openssl
   optparse
   resolv
   set
   socket
+  time
+  uri
   yaml
 
   vines/cli
@@ -100,6 +100,7 @@ end
   vines/stanza/iq/session
   vines/stanza/iq/vcard
   vines/stanza/iq/version
+  vines/stanza/dialback
   vines/stanza/message
   vines/stanza/presence
   vines/stanza/presence/error
@@ -117,7 +118,6 @@ end
   vines/stanza/pubsub/unsubscribe
 
   vines/storage
-  vines/storage/ldap
   vines/storage/local
   vines/storage/sql
   vines/storage/null
@@ -132,6 +132,7 @@ end
   vines/daemon
   vines/error
   vines/kit
+  vines/node
   vines/router
   vines/token_bucket
   vines/user
@@ -178,27 +179,38 @@ end
 
   vines/stream/server
   vines/stream/server/start
-  vines/stream/server/tls
+  vines/stream/server/auth_method
   vines/stream/server/auth_restart
   vines/stream/server/auth
   vines/stream/server/final_restart
   vines/stream/server/ready
 
   vines/stream/server/outbound/start
-  vines/stream/server/outbound/tls
-  vines/stream/server/outbound/tls_result
-  vines/stream/server/outbound/auth_restart
   vines/stream/server/outbound/auth
-  vines/stream/server/outbound/auth_result
+  vines/stream/server/outbound/tls_result
+  vines/stream/server/outbound/authoritative
+  vines/stream/server/outbound/auth_restart
+  vines/stream/server/outbound/auth_external
+  vines/stream/server/outbound/auth_external_result
+  vines/stream/server/outbound/auth_dialback_result
   vines/stream/server/outbound/final_restart
   vines/stream/server/outbound/final_features
 
-  vines/command/bcrypt
   vines/command/cert
-  vines/command/init
-  vines/command/ldap
   vines/command/restart
-  vines/command/schema
   vines/command/start
   vines/command/stop
 ].each {|f| require f }
+
+# Try loading diaspora configuration
+%w[
+  config/application.rb
+  config/load_config.rb
+  config/initializers/devise.rb
+].each {|c|
+  begin
+    require "#{Dir.pwd}/#{c}"
+  rescue LoadError
+    puts "Was not able to load #{c}! This not a standalone version. You should use it only in a diaspora environment."
+  end
+}

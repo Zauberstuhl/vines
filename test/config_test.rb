@@ -231,7 +231,6 @@ describe Vines::Config do
     end
     port = config.ports.first
     refute_nil port
-    assert !config.s2s?('verona.lit')
     assert_equal Vines::Config::ServerPort, port.class
     assert_equal '0.0.0.0', port.host
     assert_equal 5269, port.port
@@ -248,17 +247,10 @@ describe Vines::Config do
       end
       server '0.0.0.1', 42 do
         max_stanza_size 60_000
-        hosts ['verona.lit', 'denmark.lit']
       end
     end
     port = config.ports.first
     refute_nil port
-    assert config.s2s?('verona.lit')
-    assert config.s2s?('denmark.lit')
-    assert config.s2s?(Vines::JID.new('denmark.lit'))
-    refute config.s2s?(Vines::JID.new('hamlet@denmark.lit'))
-    refute config.s2s?('bogus')
-    refute config.s2s?(nil)
     assert_equal Vines::Config::ServerPort, port.class
     assert_equal '0.0.0.1', port.host
     assert_equal 42, port.port
@@ -411,6 +403,20 @@ describe Vines::Config do
     end
     refute config.vhost('wonderland.lit').cross_domain_messages?
     assert config.vhost('verona.lit').cross_domain_messages?
+  end
+
+  def test_accept_self_signed
+    config = Vines::Config.new do
+      host 'wonderland.lit' do
+        storage(:fs) { dir Dir.tmpdir }
+      end
+      host 'verona.lit' do
+        accept_self_signed true
+        storage(:fs) { dir Dir.tmpdir }
+      end
+    end
+    refute config.vhost('wonderland.lit').accept_self_signed?
+    assert config.vhost('verona.lit').accept_self_signed?
   end
 
   def test_local_jid?
