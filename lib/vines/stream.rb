@@ -15,6 +15,7 @@ module Vines
     attr_accessor :user
 
     def initialize(config)
+      @stream_id = rand(999)
       @config = config
     end
 
@@ -285,7 +286,7 @@ module Vines
       from, to = to, from if direction == :out
       label = (direction == :out) ? 'Sent' : 'Received'
       log.debug("%s %21s -> %s\n%s\n" %
-        ["#{label} stanza:".ljust(PAD), from, to, node])
+        ["#{label} stanza on \##{@stream_id}:".ljust(PAD), from, to, node])
     end
 
     # Determine if this is a valid domain-only JID that can be used in
